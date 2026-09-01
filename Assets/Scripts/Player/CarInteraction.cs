@@ -1,4 +1,5 @@
 using UnityEngine;
+using OpenWorld.Vehicle;
 
 namespace OpenWorld
 {
@@ -9,7 +10,8 @@ namespace OpenWorld
 
         public CarController CurrentCar { get; private set; }
 
-        CarController nearest;
+        CarController nearestCar;
+        TrafficCar nearestTraffic;
         PlayerController player;
         CharacterController cc;
         Renderer[] renderers;
@@ -25,9 +27,24 @@ namespace OpenWorld
         {
             if (CurrentCar == null)
             {
-                nearest = FindNearest();
-                GameManager.Instance.Hint = nearest != null ? "E — сесть в машину" : "";
-                if (nearest != null && Input.GetKeyDown(KeyCode.E)) Enter(nearest);
+                nearestCar = FindNearestCar();
+                nearestTraffic = nearestCar == null ? FindNearestTraffic() : null;
+
+                if (nearestCar != null)
+                {
+                    GameManager.Instance.Hint = "E — сесть в машину";
+                    if (Input.GetKeyDown(KeyCode.E)) Enter(nearestCar);
+                }
+                else if (nearestTraffic != null)
+                {
+                    GameManager.Instance.Hint = "E — угнать машину";
+                    if (Input.GetKeyDown(KeyCode.E)) Hijack(nearestTraffic);
+                }
+                else
+                {
+                    if (GameManager.Instance.Hint == "E — сесть в машину" || GameManager.Instance.Hint == "E — угнать машину")
+                        GameManager.Instance.Hint = "";
+                }
             }
             else
             {
@@ -36,7 +53,7 @@ namespace OpenWorld
             }
         }
 
-        CarController FindNearest()
+        CarController FindNearestCar()
         {
             CarController best = null;
             float bestD = enterDistance;
@@ -55,11 +72,42 @@ namespace OpenWorld
             return best;
         }
 
+        TrafficCar FindNearestTraffic()
+        {
+            TrafficCar best = null;
+            float bestD = enterDistance;
+            var all = FindObjectsOfType<TrafficCar>();
+            foreach (var t in all)
+            {
+                float d = Vector3.Distance(transform.position, t.transform.position);
+                if (d < bestD)
+                {
+                    bestD = d;
+                    best = t;
+                }
+            }
+            return best;
+        }
+
+        void Hijack(TrafficCar traffic)
+        {
+            Vector3 pos = traffic.transform.position;
+            Quaternion rot = traffic.transform.rotation;
+            Color col = Color.gray;
+            var mr = traffic.GetComponentInChildren<MeshRenderer>();
+            if (mr != null && mr.sharedMaterial != null) col = mr.sharedMaterial.color;
+            Destroy(traffic.gameObject);
+            var car = CarFactory.Create(pos + Vector3.up * 0.15f, rot.eulerAngles.y, col);
+            car.gameObject.AddComponent<CarDamage>();
+            Enter(car);
+        }
+
         void Enter(CarController car)
         {
             CurrentCar = car;
             car.ControlEnabled = true;
             CarController.ActiveCar = car;
+            if (car.GetComponent<CarDamage>() == null) car.gameObject.AddComponent<CarDamage>();
             player.ControlEnabled = false;
             cc.enabled = false;
             SetVisible(false);
@@ -84,6 +132,15 @@ namespace OpenWorld
         {
             foreach (var r in renderers)
                 if (r != null) r.enabled = visible;
+        }
+
+        public void ForceClear()
+        {
+            CurrentCar = null;
+            CarController.ActiveCar = null;
+            SetVisible(true);
+            if (cc != null) cc.enabled = true;
+            if (player != null) player.ControlEnabled = true;
         }
     }
 }

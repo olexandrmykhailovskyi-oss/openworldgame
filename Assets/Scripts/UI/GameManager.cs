@@ -90,17 +90,18 @@ namespace OpenWorld
                 GUI.Label(new Rect(Screen.width / 2f - 180f, Screen.height - 68f, 360f, 26f), jobText, jobStyle);
             }
 
-            var pistol = FindObjectOfType<Pistol>();
+            var inv = FindObjectOfType<WeaponInventory>();
             var car = CarController.ActiveCar;
             if (car != null)
             {
                 GUI.Label(new Rect(Screen.width - 240f, Screen.height - 70f, 220f, 40f),
                     car.SpeedKmh.ToString("0") + " км/ч", speedStyle);
             }
-            else if (pistol != null)
+            else if (inv != null && inv.Current != null)
             {
-                string ammoText = pistol.ammo + " / " + pistol.maxAmmo + (pistol.IsReloading ? "  перезарядка..." : "");
-                GUI.Label(new Rect(Screen.width - 240f, Screen.height - 70f, 220f, 30f), ammoText, ammoStyle);
+                var w = inv.Current;
+                string ammoText = w.GetType().Name + "  " + w.ammo + "/" + w.maxAmmo + (w.IsReloading ? " ..." : "") + "  [1-4/G]";
+                GUI.Label(new Rect(Screen.width - 320f, Screen.height - 70f, 300f, 30f), ammoText, ammoStyle);
             }
 
             if (showHelp)

@@ -8,11 +8,13 @@ namespace OpenWorld
         public WheelCollider[] wheels;
         public Transform[] wheelMeshes;
 
-        public float motorTorque = 1300f;
-        public float maxSteerAngle = 32f;
-        public float brakeTorque = 4000f;
-        public float maxSpeedKmh = 140f;
-        public float downForce = 40f;
+        public float motorTorque = 1850f;
+        public float maxSteerAngle = 34f;
+        public float brakeTorque = 5000f;
+        public float maxSpeedKmh = 155f;
+        public float downForce = 65f;
+        public float grip = 1.15f;
+        public float driftGrip = 0.52f;
 
         public bool ControlEnabled { get; set; }
         public static CarController ActiveCar;
@@ -25,7 +27,9 @@ namespace OpenWorld
         void Awake()
         {
             rb = GetComponent<Rigidbody>();
-            rb.centerOfMass = new Vector3(0f, -0.35f, 0f);
+            rb.centerOfMass = new Vector3(0f, -0.9f, 0.3f);
+            rb.drag = 0.08f;
+            rb.angularDrag = 0.5f;
         }
 
         void Update()
@@ -38,7 +42,7 @@ namespace OpenWorld
             }
             else
             {
-                steerInput = 0f;
+                steerInput = Mathf.MoveTowards(steerInput, 0f, 80f * Time.deltaTime);
                 throttleInput = 0f;
                 handbrake = true;
             }
@@ -47,27 +51,56 @@ namespace OpenWorld
         void FixedUpdate()
         {
             float kmh = rb.velocity.magnitude * 3.6f;
+            float speedFactor = Mathf.Clamp01(kmh / 80f);
+            float steerFactor = Mathf.Lerp(1f, 0.42f, speedFactor);
+            float curSteer = steerInput * steerFactor;
+
             for (int i = 0; i < wheels.Length; i++)
             {
                 var w = wheels[i];
                 if (w == null) continue;
-                if (i < 2) w.steerAngle = steerInput;
+                if (i < 2) w.steerAngle = curSteer;
+
+                var sideways = w.sidewaysFriction;
+                var forward = w.forwardFriction;
+                if (handbrake)
+                {
+                    sideways.stiffness = driftGrip;
+                    forward.stiffness = 0.75f;
+                }
+                else
+                {
+                    sideways.stiffness = grip;
+                    forward.stiffness = 1.05f;
+                }
+                w.sidewaysFriction = sideways;
+                w.forwardFriction = forward;
 
                 if (handbrake)
                 {
                     w.motorTorque = 0f;
-                    w.brakeTorque = brakeTorque;
+                    w.brakeTorque = i >= 2 ? brakeTorque * 0.7f : brakeTorque * 0.12f;
                     continue;
                 }
 
                 w.brakeTorque = 0f;
                 bool driven = i >= 2;
-                w.motorTorque = driven && Mathf.Abs(throttleInput) > 0.01f && kmh < maxSpeedKmh
-                    ? throttleInput * motorTorque
-                    : 0f;
+                bool canDrive = driven && Mathf.Abs(throttleInput) > 0.01f && kmh < maxSpeedKmh;
+                w.motorTorque = canDrive ? throttleInput * motorTorque : 0f;
             }
 
             rb.AddForce(-transform.up * downForce * rb.velocity.magnitude);
+
+            if (handbrake && rb.velocity.magnitude > 4f)
+            {
+                Vector3 lat = Vector3.Project(rb.velocity, transform.right);
+                rb.AddForce(-lat * 0.55f, ForceMode.Acceleration);
+            }
+
+            if (!handbrake && Mathf.Abs(throttleInput) > 0.1f && kmh > 20f)
+            {
+                rb.AddForce(transform.forward * throttleInput * 3.5f, ForceMode.Acceleration);
+            }
         }
 
         void LateUpdate()
@@ -80,6 +113,12 @@ namespace OpenWorld
                 wheels[i].GetWorldPose(out Vector3 pos, out Quaternion quat);
                 wheelMeshes[i].position = pos;
                 wheelMeshes[i].rotation = quat;
+            }
+
+            if (Mathf.Abs(steerInput) > 5f && rb.velocity.magnitude > 3f)
+            {
+                float tilt = -steerInput / maxSteerAngle * Mathf.Clamp01(rb.velocity.magnitude / 12f) * 2.8f;
+                transform.localRotation *= Quaternion.Euler(0f, 0f, tilt * Time.deltaTime * 12f);
             }
         }
 

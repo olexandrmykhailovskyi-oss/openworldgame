@@ -125,16 +125,28 @@ namespace OpenWorld
 
         void CreateRoads()
         {
-            Color asphalt = new Color(0.17f, 0.17f, 0.19f);
+            Material asphaltMat = MaterialLibrary.GetAsphalt();
             for (int i = 0; i <= blocksX; i++)
             {
                 float x = -TotalX / 2f + roadWidth / 2f + i * Cell;
-                CreateBox("RoadZ_" + i, new Vector3(x, 0.03f, 0f), new Vector3(roadWidth, 0.06f, TotalZ), asphalt);
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "RoadZ_" + i;
+                go.transform.SetParent(root, false);
+                go.transform.localPosition = new Vector3(x, 0.03f, 0f);
+                go.transform.localScale = new Vector3(roadWidth, 0.06f, TotalZ);
+                go.GetComponent<MeshRenderer>().sharedMaterial = asphaltMat;
+                go.isStatic = true;
             }
             for (int i = 0; i <= blocksZ; i++)
             {
                 float z = -TotalZ / 2f + roadWidth / 2f + i * Cell;
-                CreateBox("RoadX_" + i, new Vector3(0f, 0.032f, z), new Vector3(TotalX, 0.064f, roadWidth), asphalt);
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "RoadX_" + i;
+                go.transform.SetParent(root, false);
+                go.transform.localPosition = new Vector3(0f, 0.032f, z);
+                go.transform.localScale = new Vector3(TotalX, 0.064f, roadWidth);
+                go.GetComponent<MeshRenderer>().sharedMaterial = asphaltMat;
+                go.isStatic = true;
             }
             CreateRoadMarkings();
         }

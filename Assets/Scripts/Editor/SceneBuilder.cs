@@ -111,6 +111,9 @@ namespace OpenWorld.EditorTools
             playerGo.AddComponent<PlayerController>();
             playerGo.AddComponent<CarInteraction>();
             playerGo.AddComponent<Pistol>();
+            playerGo.AddComponent<Shotgun>();
+            playerGo.AddComponent<Rifle>();
+            playerGo.AddComponent<WeaponInventory>();
 
             var camGo = new GameObject("PlayerCamera");
             var cam = camGo.AddComponent<Camera>();
@@ -158,6 +161,9 @@ namespace OpenWorld.EditorTools
             CreateATMs(city);
             CreateMoneyPickups(city);
             CreatePedestrians(city);
+            CreateApartments(city);
+            CreateChopShop(city);
+            CreateRace(city, playerGo.transform);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("OpenWorld: демо-сцена собрана: " + ScenePath + ". Жми Play!");
@@ -270,6 +276,51 @@ namespace OpenWorld.EditorTools
                 cc.center = new Vector3(0f, 0.9f, 0f);
                 go.AddComponent<Pedestrian>();
             }
+        }
+
+        static void CreateApartments(CityGenerator city)
+        {
+            var infos = new[] {
+                new { price = 1800, income = 35, bx = 4, bz = 4 },
+                new { price = 3500, income = 75, bx = 8, bz = 8 },
+                new { price = 6200, income = 140, bx = 5, bz = 9 }
+            };
+            foreach (var info in infos)
+            {
+                Vector3 center = new Vector3(city.RoadLineX(info.bx) + city.Cell / 2f, 0f, city.RoadLineZ(info.bz) + city.Cell / 2f);
+                Vector3 pos = center + new Vector3(0f, 1f, 0f);
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                go.name = "Apartment";
+                go.transform.position = pos;
+                go.transform.localScale = new Vector3(6f, 5f, 6f);
+                var apt = go.AddComponent<Apartment>();
+                apt.price = info.price;
+                apt.incomePerMinute = info.income;
+            }
+        }
+
+        static void CreateChopShop(CityGenerator city)
+        {
+            Vector3 pos = new Vector3(city.TotalX / 2f - 22f, 0.6f, -city.TotalZ / 2f + 22f);
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "ChopShop";
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(10f, 3f, 12f);
+            var mat = new Material(Shader.Find("Standard"));
+            mat.color = new Color(0.45f, 0.12f, 0.12f);
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", new Color(0.7f, 0.15f, 0.15f) * 0.7f);
+            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            go.AddComponent<ChopShop>();
+        }
+
+        static void CreateRace(CityGenerator city, Transform player)
+        {
+            Vector3 pos = new Vector3(22f, 0.5f, 22f);
+            var go = new GameObject("RaceStart");
+            go.transform.position = pos;
+            var race = go.AddComponent<RaceManager>();
+            race.reward = 750;
         }
 
         static Material LoadOrCreateMaterial(string path, Color color)

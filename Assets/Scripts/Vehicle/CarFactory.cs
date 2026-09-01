@@ -74,6 +74,7 @@ namespace OpenWorld
             var car = root.AddComponent<CarController>();
             car.wheels = wcols;
             car.wheelMeshes = meshes;
+            root.AddComponent<Vehicle.CarDamage>();
             return car;
         }
 

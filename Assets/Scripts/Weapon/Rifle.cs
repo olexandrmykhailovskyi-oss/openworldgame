@@ -2,17 +2,17 @@ using UnityEngine;
 
 namespace OpenWorld.Weapon
 {
-    public class Pistol : Weapon
+    public class Rifle : Weapon
     {
         protected override void Awake()
         {
             base.Awake();
-            damage = 35;
-            range = 120f;
-            fireRate = 0.22f;
-            maxAmmo = 18;
+            damage = 22;
+            range = 180f;
+            fireRate = 0.10f;
+            maxAmmo = 30;
             ammo = maxAmmo;
-            reloadTime = 1.1f;
+            reloadTime = 1.35f;
         }
 
         protected override void HandleInput()
@@ -30,7 +30,8 @@ namespace OpenWorld.Weapon
             nextFire = Time.time + fireRate;
             ammo--;
             Vector3 origin = AimOrigin();
-            Vector3 dir = AimDir();
+            Vector3 dir = AimDir() + new Vector3(Random.Range(-1f, 1f) * 0.008f, Random.Range(-1f, 1f) * 0.008f, 0f);
+            dir.Normalize();
             DoRaycast(origin, dir, damage, range);
         }
     }
