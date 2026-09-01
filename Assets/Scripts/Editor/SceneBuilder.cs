@@ -112,6 +112,8 @@ namespace OpenWorld.EditorTools
             cc.center = Vector3.zero;
             playerGo.AddComponent<PlayerController>();
             playerGo.AddComponent<CarInteraction>();
+            var ent = playerGo.AddComponent<Entities.Entity>();
+            ent.maxHealth = 100;
             playerGo.AddComponent<Pistol>();
             playerGo.AddComponent<Shotgun>();
             playerGo.AddComponent<Rifle>();

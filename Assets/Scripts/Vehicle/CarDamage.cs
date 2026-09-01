@@ -18,7 +18,11 @@ namespace OpenWorld.Vehicle
             var body = transform.Find("Body");
             if (body != null) bodyRenderer = body.GetComponent<Renderer>();
             if (bodyRenderer == null) bodyRenderer = GetComponentInChildren<Renderer>();
-            if (bodyRenderer != null) originalColor = bodyRenderer.sharedMaterial.color;
+            if (bodyRenderer != null)
+            {
+                originalColor = bodyRenderer.sharedMaterial.color;
+                bodyRenderer.material = new Material(bodyRenderer.sharedMaterial);
+            }
 
             var s = GameObject.CreatePrimitive(PrimitiveType.Cube);
             s.name = "Smoke";
@@ -49,7 +53,7 @@ namespace OpenWorld.Vehicle
             {
                 Color damaged = Color.Lerp(new Color(0.18f, 0.18f, 0.19f), originalColor, t);
                 if (health < 55f) damaged = Color.Lerp(damaged, new Color(0.35f, 0.28f, 0.22f), (55f - health) / 55f * 0.35f);
-                bodyRenderer.sharedMaterial.color = damaged;
+                bodyRenderer.material.color = damaged;
             }
 
             float deform = (1f - t) * dentScale;
@@ -93,7 +97,7 @@ namespace OpenWorld.Vehicle
         public void Repair()
         {
             health = maxHealth;
-            if (bodyRenderer != null) bodyRenderer.sharedMaterial.color = originalColor;
+            if (bodyRenderer != null) bodyRenderer.material.color = originalColor;
             transform.localScale = Vector3.one;
             if (smoke != null) smoke.gameObject.SetActive(false);
             var ctrl = GetComponent<CarController>();

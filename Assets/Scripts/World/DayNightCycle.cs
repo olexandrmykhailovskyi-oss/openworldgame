@@ -34,10 +34,24 @@ namespace OpenWorld.World
             UpdateStreetLights(isNight);
         }
 
+        System.Collections.Generic.List<MeshRenderer> lampCache;
         void UpdateStreetLights(bool night)
         {
-            var city = FindObjectOfType<CityGenerator>();
-            if (city == null) return;
+            if (lampCache == null)
+            {
+                lampCache = new System.Collections.Generic.List<MeshRenderer>();
+                var all = FindObjectsOfType<MeshRenderer>();
+                foreach (var r in all) if (r.gameObject.name == "LampHead") lampCache.Add(r);
+                if (lampCache.Count == 0) return;
+            }
+            foreach (var r in lampCache)
+            {
+                if (r == null) continue;
+                var mat = r.sharedMaterial;
+                if (mat == null) continue;
+                if (night) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", new Color(1f, 0.85f, 0.55f) * 1.6f); }
+                else mat.SetColor("_EmissionColor", new Color(0f, 0f, 0f));
+            }
         }
     }
 }

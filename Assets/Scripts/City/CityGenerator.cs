@@ -283,6 +283,7 @@ namespace OpenWorld
 
                         var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                         head.name = "LampHead";
+                        head.tag = "LampHead";
                         head.transform.SetParent(root, false);
                         head.transform.localPosition = p + Vector3.up * 5.6f;
                         head.transform.localScale = Vector3.one * 0.55f;

@@ -122,8 +122,8 @@ namespace OpenWorld
 
             if (Mathf.Abs(steerInput) > 5f && rb.velocity.magnitude > 3f)
             {
-                float tilt = -steerInput / maxSteerAngle * Mathf.Clamp01(rb.velocity.magnitude / 12f) * 2.8f;
-                transform.localRotation *= Quaternion.Euler(0f, 0f, tilt * Time.deltaTime * 12f);
+                float tilt = -steerInput / maxSteerAngle * Mathf.Clamp01(rb.velocity.magnitude / 12f) * 18f * Time.deltaTime;
+                transform.Rotate(new Vector3(0f, 0f, tilt), Space.Self);
             }
         }
 

@@ -112,8 +112,13 @@ namespace OpenWorld.Police
 
         void FixedUpdate()
         {
-            if (player == null) return;
-            Vector3 toPlayer = player.position - transform.position;
+            Transform target = null;
+            var activeCar = CarController.ActiveCar;
+            if (activeCar != null) target = activeCar.transform;
+            else if (player != null) target = player;
+
+            if (target == null) return;
+            Vector3 toPlayer = target.position - transform.position;
             toPlayer.y = 0f;
             float dist = toPlayer.magnitude;
             if (dist < 1.5f) return;
@@ -125,16 +130,28 @@ namespace OpenWorld.Police
             float speed = dist > 28f ? chaseSpeed * 1.25f : chaseSpeed;
             rb.velocity = transform.forward * speed + Vector3.up * rb.velocity.y;
 
-            if (dist < 4.5f)
+            if (dist < 4.8f)
             {
-                Vector3 ndir = (player.position - transform.position).normalized + Vector3.up * 0.15f;
-                var prb = player.GetComponent<Rigidbody>();
-                if (prb != null) prb.AddForce(ndir * ramForce);
-                var cc = player.GetComponent<CharacterController>();
-                if (cc != null)
+                Vector3 ndir = (target.position - transform.position).normalized + Vector3.up * 0.18f;
+                if (activeCar != null)
                 {
-                    var dmg = player.GetComponent<Entities.Entity>();
-                    if (dmg != null) dmg.TakeDamage(8);
+                    var carDmg = activeCar.GetComponent<Vehicle.CarDamage>();
+                    if (carDmg != null) carDmg.ApplyDamage(12f);
+                    var carRb = activeCar.GetComponent<Rigidbody>();
+                    if (carRb != null) carRb.AddForce(ndir * ramForce * 0.85f);
+                }
+                else
+                {
+                    var prb = target.GetComponent<Rigidbody>();
+                    if (prb != null) prb.AddForce(ndir * ramForce);
+                    var dmg = target.GetComponent<Entities.Entity>();
+                    if (dmg != null) dmg.TakeDamage(9);
+                    var cc = target.GetComponent<CharacterController>();
+                    if (cc != null && dmg == null)
+                    {
+                        var pe = target.GetComponent<Entities.Pedestrian>();
+                        if (pe == null) target.GetComponent<Entities.Entity>()?.TakeDamage(9);
+                    }
                 }
             }
         }

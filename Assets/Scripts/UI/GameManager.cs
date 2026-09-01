@@ -65,8 +65,6 @@ namespace OpenWorld
 
             saveTimer += Time.deltaTime;
             if (saveTimer > 15f) { saveTimer = 0f; Save.SaveManager.SaveNow(); }
-
-            Hint = "";
         }
 
         public void SetCameraTarget(Transform t)
@@ -93,6 +91,7 @@ namespace OpenWorld
             }
 
             GUI.Label(new Rect(0f, Screen.height - 95f, Screen.width, 30f), Hint, hintStyle);
+            Hint = "";
 
             if (JobManager.Instance != null && JobManager.Instance.HasJob)
             {
