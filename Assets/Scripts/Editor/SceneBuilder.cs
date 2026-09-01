@@ -8,6 +8,7 @@ using OpenWorld.Entities;
 using OpenWorld.Weapon;
 using OpenWorld.World;
 using OpenWorld.Police;
+using OpenWorld.Pets;
 
 namespace OpenWorld.EditorTools
 {
@@ -173,6 +174,11 @@ namespace OpenWorld.EditorTools
             var dnc = dayNightGo.AddComponent<World.DayNightCycle>();
             dnc.sun = sun;
             dnc.cycleDuration = 90f;
+
+            var petSpawnerGo = new GameObject("PetSpawner");
+            var petSpawner = petSpawnerGo.AddComponent<PetSpawner>();
+            petSpawner.dogCount = 7;
+            petSpawner.catCount = 10;
 
             CreateShops(city);
 

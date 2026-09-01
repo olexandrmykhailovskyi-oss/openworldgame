@@ -223,7 +223,8 @@ namespace OpenWorld
                     b.transform.SetParent(root, false);
                     b.transform.localPosition = pos;
                     b.transform.localScale = size;
-                    b.GetComponent<MeshRenderer>().sharedMaterial = MaterialLibrary.GetWindowMaterial(col);
+                    Material mat = h < 18f ? MaterialLibrary.GetBrickMaterial(col) : MaterialLibrary.GetWindowMaterial(col);
+                    b.GetComponent<MeshRenderer>().sharedMaterial = mat;
                     b.isStatic = true;
                 }
             }

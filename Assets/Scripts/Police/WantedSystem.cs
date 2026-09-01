@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
-using OpenWorld.Vehicle;
 
 namespace OpenWorld.Police
 {
+    public enum CrimeType { Brandishing, Assault, Theft, Vandalism, Murder, Explosion, MassMurder }
+
     public class WantedSystem : MonoBehaviour
     {
         public static WantedSystem Instance { get; private set; }
@@ -13,6 +15,8 @@ namespace OpenWorld.Police
 
         float lastCrimeTime;
         CityGenerator city;
+        List<float> recentMurders = new List<float>();
+        int massMurderStreak;
 
         void Awake()
         {
@@ -24,11 +28,12 @@ namespace OpenWorld.Police
         void Update()
         {
             if (Stars <= 0) return;
+            recentMurders.RemoveAll(t => Time.time - t > 30f);
             if (Time.time - lastCrimeTime > decayTime && !IsPlayerSeen())
             {
                 Stars--;
                 lastCrimeTime = Time.time;
-                if (Stars == 0) DespawnPolice();
+                if (Stars == 0) { DespawnPolice(); massMurderStreak = 0; }
             }
         }
 
@@ -39,9 +44,42 @@ namespace OpenWorld.Police
             SpawnPolice();
         }
 
+        public void ReportCrime(CrimeType type, Vector3 pos)
+        {
+            int stars = 0;
+            switch (type)
+            {
+                case CrimeType.Brandishing: stars = 1; break;
+                case CrimeType.Assault: stars = 1; break;
+                case CrimeType.Theft: stars = 1; break;
+                case CrimeType.Vandalism: stars = 1; break;
+                case CrimeType.Murder: stars = 2; break;
+                case CrimeType.Explosion: stars = 2; break;
+                case CrimeType.MassMurder: stars = 3; break;
+            }
+
+            if (type == CrimeType.Murder || type == CrimeType.Explosion)
+            {
+                recentMurders.Add(Time.time);
+                recentMurders.RemoveAll(t => Time.time - t > 30f);
+                if (recentMurders.Count >= 3)
+                {
+                    massMurderStreak++;
+                    if (massMurderStreak >= 2) stars = Mathf.Max(stars, 3);
+                    else stars = Mathf.Max(stars, 2);
+                    if (recentMurders.Count >= 5) ReportCrime(CrimeType.MassMurder, pos);
+                }
+            }
+
+            if (type == CrimeType.Brandishing && Stars >= 2) return;
+            AddStar(stars);
+        }
+
         public void ClearWanted()
         {
             Stars = 0;
+            recentMurders.Clear();
+            massMurderStreak = 0;
             DespawnPolice();
         }
 
@@ -52,6 +90,8 @@ namespace OpenWorld.Police
             var cops = FindObjectsOfType<PoliceCar>();
             foreach (var c in cops)
                 if (Vector3.Distance(c.transform.position, player.transform.position) < 42f) return true;
+            foreach (var ped in FindObjectsOfType<Entities.Pedestrian>())
+                if (ped.IsCallingPolice && Vector3.Distance(ped.transform.position, player.transform.position) < 25f) return true;
             return false;
         }
 
@@ -62,6 +102,8 @@ namespace OpenWorld.Police
             var player = FindObjectOfType<PlayerController>();
             if (player == null) return;
             int toSpawn = Mathf.Clamp(Stars, 1, 3);
+            if (Stars >= 4) toSpawn = 4;
+            if (Stars == 5) toSpawn = 5;
             var existing = FindObjectsOfType<PoliceCar>().Length;
             for (int i = existing; i < toSpawn; i++)
             {

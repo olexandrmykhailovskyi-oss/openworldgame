@@ -36,7 +36,8 @@ namespace OpenWorld.Weapon
         protected void DoRaycast(Vector3 origin, Vector3 dir, int dmg, float rng)
         {
             Visuals.Effects.MuzzleFlash(origin, dir);
-            if (Police.WantedSystem.Instance != null) Police.WantedSystem.Instance.AddStar(1);
+            Entities.Pedestrian.NotifyGunshot(origin);
+            if (Police.WantedSystem.Instance != null) Police.WantedSystem.Instance.ReportCrime(Police.CrimeType.Assault, origin);
             if (Physics.Raycast(origin, dir, out RaycastHit hit, rng))
             {
                 var entity = hit.collider.GetComponentInParent<OpenWorld.Entities.Entity>();
