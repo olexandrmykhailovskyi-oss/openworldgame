@@ -67,6 +67,8 @@ namespace OpenWorld.Entities
         {
             if (OpenWorld.Economy.PlayerWallet.Instance != null)
                 OpenWorld.Economy.PlayerWallet.Instance.AddMoney(30);
+            if (OpenWorld.Police.WantedSystem.Instance != null)
+                OpenWorld.Police.WantedSystem.Instance.AddStar(1);
             base.Die();
         }
     }

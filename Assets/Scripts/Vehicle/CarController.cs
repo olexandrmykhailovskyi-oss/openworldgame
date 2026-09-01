@@ -95,6 +95,11 @@ namespace OpenWorld
             {
                 Vector3 lat = Vector3.Project(rb.velocity, transform.right);
                 rb.AddForce(-lat * 0.55f, ForceMode.Acceleration);
+                if (Random.Range(0f, 1f) < 0.35f && wheels != null && wheels.Length >= 4)
+                {
+                    Visuals.Effects.TireSmoke(wheels[2].transform.position);
+                    Visuals.Effects.TireSmoke(wheels[3].transform.position);
+                }
             }
 
             if (!handbrake && Mathf.Abs(throttleInput) > 0.1f && kmh > 20f)

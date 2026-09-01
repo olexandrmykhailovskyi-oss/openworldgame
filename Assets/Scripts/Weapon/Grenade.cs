@@ -26,6 +26,8 @@ namespace OpenWorld.Weapon
 
         void Explode()
         {
+            if (Police.WantedSystem.Instance != null) Police.WantedSystem.Instance.AddStar(2);
+            Visuals.Effects.Explosion(transform.position, radius);
             var hits = Physics.OverlapSphere(transform.position, radius);
             foreach (var c in hits)
             {

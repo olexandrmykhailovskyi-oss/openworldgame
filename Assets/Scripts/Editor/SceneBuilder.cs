@@ -7,6 +7,7 @@ using OpenWorld.Jobs;
 using OpenWorld.Entities;
 using OpenWorld.Weapon;
 using OpenWorld.World;
+using OpenWorld.Police;
 
 namespace OpenWorld.EditorTools
 {
@@ -165,6 +166,16 @@ namespace OpenWorld.EditorTools
             CreateChopShop(city);
             CreateRace(city, playerGo.transform);
 
+            var wantedGo = new GameObject("WantedSystem");
+            wantedGo.AddComponent<Police.WantedSystem>();
+
+            var dayNightGo = new GameObject("DayNightCycle");
+            var dnc = dayNightGo.AddComponent<World.DayNightCycle>();
+            dnc.sun = sun;
+            dnc.cycleDuration = 90f;
+
+            CreateShops(city);
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("OpenWorld: демо-сцена собрана: " + ScenePath + ". Жми Play!");
         }
@@ -321,6 +332,35 @@ namespace OpenWorld.EditorTools
             go.transform.position = pos;
             var race = go.AddComponent<RaceManager>();
             race.reward = 750;
+        }
+
+        static void CreateShops(CityGenerator city)
+        {
+            Vector3 wCenter = new Vector3(city.RoadLineX(2) + city.Cell / 2f, 0f, city.RoadLineZ(8) + city.Cell / 2f);
+            Vector3 wPos = wCenter + new Vector3(0f, 1f, 0f);
+            var wGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wGo.name = "WeaponShop";
+            wGo.transform.position = wPos;
+            wGo.transform.localScale = new Vector3(5f, 3f, 5f);
+            var wMat = new Material(Shader.Find("Standard"));
+            wMat.color = new Color(0.55f, 0.25f, 0.15f);
+            wMat.EnableKeyword("_EMISSION");
+            wMat.SetColor("_EmissionColor", new Color(0.8f, 0.35f, 0.15f) * 0.6f);
+            wGo.GetComponent<MeshRenderer>().sharedMaterial = wMat;
+            wGo.AddComponent<WeaponShop>();
+
+            Vector3 cCenter = new Vector3(city.RoadLineX(9) + city.Cell / 2f, 0f, city.RoadLineZ(3) + city.Cell / 2f);
+            Vector3 cPos = cCenter + new Vector3(0f, 1f, 0f);
+            var cGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cGo.name = "CarShop";
+            cGo.transform.position = cPos;
+            cGo.transform.localScale = new Vector3(7f, 3f, 7f);
+            var cMat = new Material(Shader.Find("Standard"));
+            cMat.color = new Color(0.15f, 0.35f, 0.65f);
+            cMat.EnableKeyword("_EMISSION");
+            cMat.SetColor("_EmissionColor", new Color(0.2f, 0.5f, 0.9f) * 0.6f);
+            cGo.GetComponent<MeshRenderer>().sharedMaterial = cMat;
+            cGo.AddComponent<CarShop>();
         }
 
         static Material LoadOrCreateMaterial(string path, Color color)

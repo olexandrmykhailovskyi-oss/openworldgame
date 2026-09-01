@@ -28,6 +28,7 @@ namespace OpenWorld
         GUIStyle moneyStyle;
         GUIStyle jobStyle;
         GUIStyle ammoStyle;
+        GUIStyle starStyle;
 
         string helpText =
             "УПРАВЛЕНИЕ\n" +
@@ -48,6 +49,7 @@ namespace OpenWorld
             instance = this;
         }
 
+        float saveTimer;
         void Update()
         {
             if (Input.GetKeyDown(KeyCode.H)) showHelp = !showHelp;
@@ -60,6 +62,9 @@ namespace OpenWorld
                     JobManager.Instance.CompleteJob();
                 }
             }
+
+            saveTimer += Time.deltaTime;
+            if (saveTimer > 15f) { saveTimer = 0f; Save.SaveManager.SaveNow(); }
 
             Hint = "";
         }
@@ -78,6 +83,14 @@ namespace OpenWorld
 
             int money = PlayerWallet.Instance != null ? PlayerWallet.Instance.Money : 0;
             GUI.Label(new Rect(Screen.width / 2f - 100f, 10f, 200f, 30f), "$ " + money, moneyStyle);
+
+            if (Police.WantedSystem.Instance != null && Police.WantedSystem.Instance.Stars > 0)
+            {
+                int s = Police.WantedSystem.Instance.Stars;
+                string stars = "";
+                for (int i = 0; i < 5; i++) stars += i < s ? "★" : "☆";
+                GUI.Label(new Rect(Screen.width / 2f - 100f, 42f, 200f, 26f), stars, starStyle);
+            }
 
             GUI.Label(new Rect(0f, Screen.height - 95f, Screen.width, 30f), Hint, hintStyle);
 
@@ -145,6 +158,11 @@ namespace OpenWorld
             ammoStyle.alignment = TextAnchor.MiddleRight;
             ammoStyle.fontSize = 18;
             ammoStyle.normal.textColor = Color.white;
+
+            starStyle = new GUIStyle();
+            starStyle.alignment = TextAnchor.MiddleCenter;
+            starStyle.fontSize = 22;
+            starStyle.normal.textColor = new Color(1f, 0.22f, 0.22f);
         }
     }
 }

@@ -1,84 +1,79 @@
 # OpenWorldGame — GTA 6-like открытый мир на Unity 6000
 
-Мега-апдейт: огромный город 1км, горы, трафик, экономика, работы, угон, квартиры, урон машин, GTA-физика, 4 вида оружия и гранаты.
+**Мега-апдейт:** полиция с погонями, день/ночь, сохранения, магазины, улучшенная физика, 4 пушки + гранаты, квартиры с доходом, 8 способов фарма — всё в одном городе 1км.
 
 ## Мир 1км × 1км
 
-- **Город 998м** — `CityGenerator` 12×12 кварталов (68м + дороги 14м). Здания с **оконными текстурами 256×256** (`MaterialLibrary` — процедурная генерация окон 8×8 с подсветкой, Perlin-шум, рамы), асфальт с шумом `GetAsphalt()`, тротуары штукатурка, белая разметка штрихами каждые 6м. ~1400 зданий.
-- **Горы** — кольцо коробок 60-155м + сферы-пики, закрывает горизонт, `isStatic` для батчинга.
-- **Небо** — `Skybox/Procedural` (`_SkyTint 0.5/0.5/0.6`, `_GroundColor`, `_AtmosphereThickness 1.05`, `_Exposure 1.25`), `RenderSettings.ambientMode Skybox`, туман `Exponential 0.0022`, даль камеры `2000м`.
+- **Город 998м** — `CityGenerator` 12×12 кварталов (68м + дороги 14м). Здания с **256×256 оконными текстурами** (`MaterialLibrary` — Perlin 8×8 сетка, рандом подсветки), асфальт с шумом, белая разметка каждые 6м.
+- **Горы** — кольцо коробок 60-155м + сферы-пики, `isStatic` батчинг, не даёт выпасть.
+- **Небо** — `Skybox/Procedural` (`_SkyTint 0.5/0.5/0.6`, `_GroundColor`, `_Atmosphere 1.05`, `_Exposure 1.25`), `RenderSettings.ambientMode Skybox`, туман `0.0022`, даль `2000м`.
+- **День/Ночь** — `DayNightCycle` 90с цикл, вращает солнце `360°`, меняет `intensity 0.12→1.18`, `ambientIntensity 0.35→1.05`, `fogDensity` — ночь/день.
 
-## Машины — физика как в GTA
+## Физика как в GTA
 
-`CarController` — перенастроено под аркаду:
-- Центр массы `-0.9,0.3`, `drag 0.08`, `motor 1850`, `steer 34°` с падением на скорости `0.42×`, `brake 5000`
-- `sidewaysStiffness 1.15` → `0.52` на ручнике, `forward 1.05/0.75`, дрифт через `AddForce(-lat*0.55)`, прижим `65×velocity`, крен на поворотах.
+`CarController` — аркада: `CoM -0.9`, `motor 1850`, `steer 34°` с падением `0.42×` на 80км/ч, `brake 5000`, `grip 1.15→0.52` на ручнике, `downForce 65`, дрифт `AddForce(-lat*0.55)` + дым шин `Effects.TireSmoke` + крен `2.8°`. Колеса `WheelCollider 35k/4.5k`.
 
-`CarDamage` — здоровье 100, царапины (темнение цвета), вмятины (`localScale`), дым-куб при `<40%`, взрыв с `AddForce`, падение мощности `650-1350` и скорости `55-155 км/ч`. Чинится `Repair()`.
+`CarDamage` — 100 HP, `OnCollisionEnter` урон `*1.8`, потемнение, вмятины `scale`, дым `<40%`, взрыв `AddForce 4200`, падение `torque 650-1350`, `Repair()`.
 
-**Угон:** `CarInteraction` теперь видит `TrafficCar` (`FindNearestTraffic`) — `E — угнать` → конвертирует трафик в управляемый `CarFactory.Create` + `CarDamage`.
+**Угон:** `CarInteraction` видит `TrafficCar` → `E — угнать` → конвертирует в `CarFactory.Create` + `CarDamage`.
 
-## Экономика — 7 способов заработать
+## Экономика — 8 способов
 
-| Способ | Файл | Сколько |
+| Способ | Файл | $ |
 |---|---|---|
-| **Такси** | `JobManager Taxi` | $120-200 |
-| **Курьер** | `Courier` | $90-150 |
-| **Сбор** | `Collect` | $60-100 |
-| **Монетки** | `MoneyPickup` 36 шт | $12-40 |
-| **Банкомат** | `ATM` 5 шт | $250/45с |
-| **Скупка угнанных** | `ChopShop` у юга карты | $300-600 (зависит от целосности) |
-| **Гонка** | `RaceManager` 5 чекпоинтов | $750+300 бонус |
-| **Квартиры (пассив)** | `Apartment` 3 шт | $35-140/мин |
-| **Дроп с NPC** | `Pedestrian.Die` | $30 |
+| Такси | `JobManager Taxi` | 120-200 |
+| Курьер | `Courier` | 90-150 |
+| Сбор | `Collect` | 60-100 |
+| Монетки 36 | `MoneyPickup` | 12-40 |
+| Банкомат 5 | `ATM` | 250/45с |
+| Скупка  | `ChopShop` 10×12м | 300-600 по целосности |
+| Гонка 5 чекпоинтов | `RaceManager` | 750+300 |
+| Квартиры пассив | `Apartment` | 35-140/мин |
 
-`PlayerWallet` — синглтон, `PlayerPrefs` сохранение, `OnMoneyChanged`.
+`PlayerWallet` — синглтон, `PlayerPrefs` + `SaveManager` JSON.
 
-## Квартиры
+## Квартиры 3
 
-3 квартиры (`Apartment.cs`): `$1800/$35`, `$3500/$75`, `$6200/$140` в `SceneBuilder:CreateApartments`. Куб 6×5м с интерьером (пол 8м). `E` купить/войти (телепорт на `+12м` вверх), `H` продать за 50%. Пассивный доход `incomeTimer += delta; if >=60s AddMoney`.
+`Apartment` 6×5м с интерьером `+12м` (пол 8м) на блоках 4,4 / 8,8 / 5,9: `$1800/35`, `$3500/75`, `$6200/140`. `E` купить/войти, `H` продать 50%, `incomeTimer 60с`. Сохраняются `PlayerPrefs "Apt_x_z"`.
 
-`ChopShop` — красный куб 10×12м на краю, сдай угнанную тачку на `E`.
+## Полиция и розыск ★
 
-`RaceManager` — старт у `(22,22)`, генерирует 5 чекпоинтов-цилиндров розовых по дорогам, таймер, бонус `<45с`.
+`WantedSystem` — `Stars 0-5`, `AddStar()` на выстрел/убийство педа/гранату, `decay 25с` если нет копов в `42м`, спавн `PoliceCar.Create` (белый+синяя полоса+мигалка красно-синяя) `1-3` шт, погоня `13м/с` `turn 140°`, таран `900` + урон педу `8`. `Despawn` при 0 звезд.
 
-## Оружие — 4 вида + инвентарь
+## Магазины
 
-База `Weapon.cs` → `Pistol`, `Shotgun` (8 дробинок, разброс 6), `Rifle` (авто `0.10с`, 30 пат), `Grenade` (3с фитиль, `radius 9м, 90 dmg`, `OverlapSphere`, `AddForce 900`).
+- **Оружие** `WeaponShop` 5×3м — `1 Pistol $500 18патр, 2 Shotgun $1200 8патр, 3 Rifle $2500 30патр`
+- **Автосалон** `CarShop` 7×3м — седан `$1800` спорт `$4500` внедорожник `$7000` → `CarFactory.Create`
 
-`WeaponInventory` на игроке — `1-4` переключение, `Scroll`, `G` бросок гранаты (сфера 0.5м, `Rigidbody 1.2кг, 620+180` вверх). `Pistol/Shotgun/Rifle` рейкаст из `Camera.main`.
+## Оружие 4 + гранаты
 
-Пешком: `ЛКМ` огонь, `R` перезарядка. В машине стрельба отключена (`PlayerController.ControlEnabled == false`).
+База `Weapon` → `Pistol 35/120м/0.22с/18`, `Shotgun 8×18/45м/0.68с`, `Rifle 22/180м/0.10с авто`, `Grenade 9м/90dmg/OverlapSphere`. `WeaponInventory` на игроке — `1-4/Scroll` выбор, `G` бросок гранаты `Rigidbody 620+180`, `MuzzleFlash` сфера `0.06с`, `Explosion` сфера `0.42с`. Стрельба только пешком.
 
 ## Сущности
 
-`Entity` — 100 HP, `TakeDamage`. `Pedestrian` — 28 NPC (`SceneBuilder:CreatePedestrians`) бродят по тротуарам `walkSpeed 1.6`, `BlockCenter ± (blockSize-6)`, ждут `0.5-2с`.
+`Entity` 100 HP → `Pedestrian` 28 шт бродят по тротуарам `1.6м/с` `BlockCenter ± (blockSize-6)`, ждут `0.5-2с`, дроп `$30` + звезда.
 
 ## Управление
 
 ```
-WASD — ходьба/руль, Shift бег, Space прыжок/ручник
+WASD ход/руль, Shift бег, Space прыжок/ручник
 E — сесть/угнать, работа, банкомат, квартира, скупка, гонка
-ЛКМ — огонь (пистолет/дробовик/винтовка), R — перезарядка
-G — граната, 1-4 — смена оружия, H — подсказки/продажа
-Мышь — камера, Esc — курсор
+ЛКМ огонь, R перезарядка, G граната, 1-4 смена, H подсказки, Esc курсор
 ```
 
-## Текстуры по красоте
+## UI
 
-`MaterialLibrary`:
-- Окна 256: рамы 2px, 8×8 сетка, двойные стёкла, `PerlinNoise` шум, случайные включенные окна `Sin(seed)`, блики.
-- Асфальт 128: `PerlinNoise 0.08/0.25`, вкрапления, `Bilinear`
-- Штукатурка 128: светлая `0.88+0.07*Perlin`
+Мини-карта 220 `RenderTexture 256 ortho 170м` справа сверху, деньги по центру, звезды `★☆` по центру `42px`, задание `описание $ dist`, патроны `Pistol 12/18 [1-4/G]` справа снизу, скорость в тачке.
 
-Здания — `GetWindowMaterial`, дороги — `GetAsphalt`, горы — каменные 5 оттенков.
+## Сохранения
 
-## Быстрый старт
+`SaveManager` JSON `PlayerPrefs "OpenWorld_Save_v2"` — деньги, патроны, `GameManager` автосейв каждые `15с` + `PlayerWallet` загрузка при старте.
 
-1. Unity Hub → **Unity 6000.5+** → https://unity.com/download
+## Старт
+
+1. Unity Hub → Unity **6000.5+** → https://unity.com/download
 2. Add project from disk → `openworldgame` (не `My project/`)
-3. Дождись компиляции — сцена `Assets/Scenes/Main.unity` соберётся сама (`SceneBuilder InitializeOnLoad`), иначе `OpenWorld → Собрать демо-сцену`
-4. Play
+3. Дождись компиляции — сцена `Assets/Scenes/Main.unity` соберётся сама, иначе `OpenWorld → Собрать демо-сцену` → Play
 
 Совместимо с `2022.3 LTS` и `6000+`.
 
@@ -86,17 +81,16 @@ G — граната, 1-4 — смена оружия, H — подсказки/
 
 ```
 Assets/Scripts/
-├── City/CityGenerator.cs + Visuals/MaterialLibrary.cs
-├── Vehicle/CarController.cs (GTA), CarDamage.cs, CarFactory.cs, TrafficCar.cs
-├── Economy/PlayerWallet.cs, MoneyPickup.cs
-├── Jobs/JobManager.cs, JobMarker.cs, JobGiver.cs
-├── World/Apartment.cs, ChopShop.cs, RaceManager.cs, ATM.cs
-├── Entities/Entity.cs, Pedestrian.cs
-├── Weapon/Weapon.cs, Pistol.cs, Shotgun.cs, Rifle.cs, Grenade.cs, WeaponInventory.cs
+├── City/CityGenerator.cs + Visuals/{MaterialLibrary,Effects}.cs
+├── Vehicle/{CarController(GTA),CarDamage,CarFactory,TrafficCar/Spawner}
+├── Police/{WantedSystem,PoliceCar}
+├── World/{DayNightCycle,Apartment,ChopShop,RaceManager,ATM}
+├── Economy/{PlayerWallet,MoneyPickup} + Save/SaveManager.cs
+├── Jobs/{JobManager,JobMarker,JobGiver} + Entities/{Entity,Pedestrian}
+├── Weapon/{Weapon,Pistol,Shotgun,Rifle,Grenade,WeaponInventory}
 └── Editor/SceneBuilder.cs
 ```
 
 ## GitHub
 
-https://github.com/olexandrmykhailovskyi-oss/openworldgame — ветка `master`.
-Папка `My project/` — кэш шаблона, игнорируется.
+https://github.com/olexandrmykhailovskyi-oss/openworldgame — `master` (38 файлов, Roslyn 0 ошибок).

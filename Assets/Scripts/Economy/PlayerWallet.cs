@@ -15,7 +15,14 @@ namespace OpenWorld.Economy
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
-            Money = PlayerPrefs.GetInt("Money", 250);
+            try
+            {
+                var data = Save.SaveManager.Load();
+                Money = data.money;
+                if (Money < 0) Money = PlayerPrefs.GetInt("Money", 250);
+            }
+            catch { Money = PlayerPrefs.GetInt("Money", 250); }
+            PlayerPrefs.SetInt("Money", Money);
         }
 
         public void AddMoney(int amount)
